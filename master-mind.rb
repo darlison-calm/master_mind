@@ -1,23 +1,42 @@
+#Now refactor your code to allow the human player to choose whether they want to be the creator of the secret code or 
+#the guesser.
 
 class Board
-
+  
   def initialize
+    @role = ''
     @black_pegs = 0
     @white_pegs = 0
-    
-    @code_maker = CodeMaker.new
-    @code_breaker = CodeBraker.new
     @tries = 12
-  
+    setup_game(choose_role)
+    play_mode
   end
 
-  def play
+  def play_mode 
+    if @role == 'decoder'
+      play_human_codebreaker
+    end
+  end
+
+  def setup_game(role)
+    
+    if role == '1'
+      @code_breaker = HumanCodeBreaker.new
+      @code_maker = CodeMaker.computer_code
+      @role = 'decoder'
+    end
+  end
+  
+  def game_introduction
     puts "\nWelcome to Mastermind!\nINTRUCTIONS:\n\nCrack the 4-digit code, using numbers 1-6, with repeats allowed."
     puts"A white peg (W) indicates that a guessed number is correct but in the wrong position,\nwhile a black peg (B) indicates a guessed number is correct and in the correct position."
-   
+  end
+
+  def play_human_codebreaker
+    game_introduction
     while @tries > 0 
       puts "\nYou have #{@tries} tries"
-      @code_breaker.pick_guess
+      @code_breaker.human_guess
       check_pegs
       display_pegs
       if winner?
@@ -26,6 +45,17 @@ class Board
       @black_pegs = 0
       @white_pegs = 0
       lost?
+    end
+  end
+
+  def choose_role
+    puts "Press 1 to be the codebreaker, press 2 to be the codemaker"
+    
+    loop do
+      role = gets.chomp
+      if role.size == 1 && role =~ /[1-2]/
+        return role
+      end
     end
   end
 
@@ -47,7 +77,6 @@ class Board
 
   def winner?
     @tries -=1
-    
     if @black_pegs == 4
       puts "You cracked the code!"   
       return true
@@ -72,31 +101,30 @@ class Board
   end
 end
 
-
 class CodeMaker
   attr_reader :code
 
   NUMBERS = %w(1 2 3 4 5 6)
 
-  def initialize
-    @code = generate_code
+  def initialize(code)
+    @code = code
   end
-
+  
   private
   
-  def generate_code
-    Array.new(4) { NUMBERS.sample }
+  def self.computer_code
+    CodeMaker.new(Array.new(4) { NUMBERS.sample })
   end
 end
 
-class CodeBraker
+class HumanCodeBreaker
   attr_reader :guess
 
   def initialize
     @guess = ''
   end
   
-  def pick_guess
+  def human_guess
     loop do
       print "What's your guess: "
       @guess = gets.chomp
@@ -108,10 +136,10 @@ class CodeBraker
         puts 'invalid input'
       end
     end
-  end
+  end 
 end
 
 
 
+
 x = Board.new
-x.play

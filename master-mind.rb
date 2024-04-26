@@ -2,7 +2,7 @@
 #the guesser.
 
 class Board
-  
+
   def initialize
     @role = ''
     @black_pegs = 0
@@ -18,17 +18,8 @@ class Board
     end
   end
 
-  def setup_game(role)
-    
-    if role == '1'
-      @code_breaker = HumanCodeBreaker.new
-      @code_maker = CodeMaker.computer_code
-      @role = 'decoder'
-    end
-  end
-  
   def game_introduction
-    puts "\nWelcome to Mastermind!\nINTRUCTIONS:\n\nCrack the 4-digit code, using numbers 1-6, with repeats allowed."
+    puts "\nWelcome to Mastermind!\nINTRUCTIONS:\n\nCrack the 4-digit code or make a 4-digit code, using numbers 1-6, with repeats allowed."
     puts"A white peg (W) indicates that a guessed number is correct but in the wrong position,\nwhile a black peg (B) indicates a guessed number is correct and in the correct position."
   end
 
@@ -48,24 +39,8 @@ class Board
     end
   end
 
-  def choose_role
-    puts "Press 1 to be the codebreaker, press 2 to be the codemaker"
-    
-    loop do
-      role = gets.chomp
-      if role.size == 1 && role =~ /[1-2]/
-        return role
-      end
-    end
-  end
-
-  def lost?
-    if @tries == 0
-      puts "Codebreaker lose! The code was #{@code_maker.code.join}"
-      return true
-    end
-  end
-
+  private
+  
   def display_pegs
     white_pegs = 'W' * @white_pegs 
     black_pegs = 'B' * @black_pegs
@@ -73,6 +48,38 @@ class Board
     pegs = pegs.split("")
     pegs = pegs.rotate(rand(100)).join
     puts pegs
+  end
+
+  def choose_role
+    puts "Press 1 to be the codebreaker, press 2 to be the codemaker"
+    
+    loop do
+      role = gets.chomp
+      if role.size == 1 && role =~ /[1-2]/
+        return role
+      else
+        puts "Invalid input"
+      end
+    end
+  end
+
+  def setup_game(role)
+    case role
+    when '1'
+        @code_breaker = HumanCodeBreaker.new
+        @code_maker = CodeMaker.computer_code
+        @role = 'decoder'
+    else
+        "Error: role has an invalid value (#{role})"
+    end
+    
+  end
+
+  def lost?
+    if @tries == 0
+      puts "Codebreaker lose! The code was #{@code_maker.code.join}"
+      return true
+    end
   end
 
   def winner?
@@ -88,8 +95,7 @@ class Board
     guess = @code_breaker.guess
     
     @black_pegs = code.zip(guess).count { |c, g| c == g }
-    code.each do |value|  
-      
+    code.each do |value|     
       guess_index = guess.index(value)
       
       if guess_index
@@ -101,7 +107,16 @@ class Board
   end
 end
 
+module CodeValidator
+  
+  def validate_code(code)
+    raise ArgumentError, "Invalid code. Try again." unless code.length == 4 && code.all? { |i| i.between?('1','6') }
+    code
+  end
+end
+
 class CodeMaker
+  
   attr_reader :code
 
   NUMBERS = %w(1 2 3 4 5 6)
@@ -115,31 +130,39 @@ class CodeMaker
   def self.computer_code
     CodeMaker.new(Array.new(4) { NUMBERS.sample })
   end
+
+  def self.human_code 
+    puts "Create a code:"
+    begin
+      code = gets.chomp.split('')
+      validate_code(code)
+      rescue ArgumentError => e
+        puts e.message
+        retry
+    end
+  end
 end
 
 class HumanCodeBreaker
   attr_reader :guess
+
+  include CodeValidator
 
   def initialize
     @guess = ''
   end
   
   def human_guess
-    loop do
-      print "What's your guess: "
-      @guess = gets.chomp
-      
-      if @guess.size == 4 && @guess =~ /^\d+$/
-        @guess = @guess.split('')
-        break
-      else
-        puts 'invalid input'
-      end
-    end
+    print "What's your guess: "
+    begin
+      @guess = gets.chomp.split('')
+      validate_code(@guess)
+    rescue ArgumentError => e
+      puts e.message
+      retry
+    end  
   end 
 end
-
-
 
 
 x = Board.new

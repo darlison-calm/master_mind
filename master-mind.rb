@@ -37,7 +37,7 @@ class Board
     @white_pegs = 0
     @tries = 12
     game_introduction
-    setup_game('2')
+    setup_game(choose_role)
     play_mode
   end
 
@@ -56,7 +56,7 @@ class Board
       
       puts "\nYou have #{@tries} tries"
       @code_breaker.human_guess
-      p @code_maker.code
+      @code_maker.code
       result = evaluate_guess(@code_maker.code, @code_breaker.guess)
       @black_pegs = result[0]
       @white_pegs = result[1]
@@ -167,7 +167,7 @@ class CodeMaker
   def human_code 
     puts 'Create a code:'
     begin
-      code = '2345'.split('')
+      code = gets.chomp.split('')
       validate_code(code)
     
     rescue ArgumentError => e   
